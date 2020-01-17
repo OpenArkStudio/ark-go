@@ -33,4 +33,5 @@ func (lib *AFDynLib) GetSymbol(symbol string) plugin.Symbol {
 
 	//f.(func())()
 	return f
+
 }
