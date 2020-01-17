@@ -23,14 +23,23 @@ const logo = `
 Copyright 2019 (c) ArkNX. All Rights Reserved.
 Website: https://arknx.com
 Github:  https://github.com/ArkNX
+
+Version : %s
+Branch : %s
+CommitID : %s
 *************************************************
 `
 
 var (
-	busId      = ""
-	serverName = ""
-	plugin     = ""
-	logPath    = ""
+	// version args
+	commit  string
+	branch  string
+	version = "unknown"
+	// command line args
+	busId      string
+	serverName string
+	plugin     string
+	logPath    string
 )
 
 func isFlagParsed(name string) bool {
@@ -87,26 +96,13 @@ func parseFlags() error {
 }
 
 func printLogo() {
-	fmt.Println(logo)
+	fmt.Printf(logo, version, branch, commit)
 }
+
 func main() {
 	if err := parseFlags(); err != nil {
 		log.Fatal(err)
 	}
 
 	printLogo()
-
-	// TODO: delete
-	temp := common.NewAFBusAddrFromInt(16909060)
-	fmt.Println(temp.ToString())
-	fmt.Println(temp.BudId)
-
-	temp = common.NewAFBusAddr(1, 2, 3, 4)
-	fmt.Println(temp.ToString())
-	fmt.Println(temp.BudId)
-
-	temp = &common.AFBusAddr{}
-	temp.FromString("9.9.9.9")
-	fmt.Println(temp.ToString())
-	fmt.Println(temp.BudId)
 }
