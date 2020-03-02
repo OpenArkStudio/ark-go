@@ -5,13 +5,13 @@ import (
 	"github.com/ArkNX/ark-go/util"
 )
 
-var HttpPluginName = util.GetName((*AFHttpPlugin)(nil))
+var PluginName = util.GetName((*AFHttpPlugin)(nil))
 
 type AFHttpPlugin struct {
 	ark.AFCPlugin
 }
 
-func NewAFHttpPlugin() *AFHttpPlugin {
+func NewPlugin() *AFHttpPlugin {
 	return &AFHttpPlugin{AFCPlugin: ark.NewAFCPlugin()}
 }
 
@@ -24,5 +24,5 @@ func (httpPlugin *AFHttpPlugin) Uninstall() {
 }
 
 func (httpPlugin *AFHttpPlugin) GetPluginName() string {
-	return HttpPluginName
+	return PluginName
 }

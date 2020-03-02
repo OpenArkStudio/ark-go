@@ -8,9 +8,9 @@ import (
 func main() {}
 
 func DllEntryPlugin(pPluginManager *ark.AFPluginManager) {
-	pPluginManager.Register(httpSrc.NewAFHttpPlugin())
+	pPluginManager.Register(httpSrc.NewPlugin())
 }
 
 func DllExitPlugin(pPluginManager *ark.AFPluginManager) {
-	pPluginManager.Deregister(httpSrc.HttpPluginName)
+	pPluginManager.Deregister(httpSrc.PluginName)
 }

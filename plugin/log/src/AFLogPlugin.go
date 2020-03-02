@@ -5,13 +5,13 @@ import (
 	"github.com/ArkNX/ark-go/util"
 )
 
-var LogPluginName = util.GetName((*AFLogPlugin)(nil))
+var PluginName = util.GetName((*AFLogPlugin)(nil))
 
 type AFLogPlugin struct {
 	ark.AFCPlugin
 }
 
-func NewAFLogPlugin() *AFLogPlugin {
+func NewPlugin() *AFLogPlugin {
 	return &AFLogPlugin{AFCPlugin: ark.NewAFCPlugin()}
 }
 
@@ -24,5 +24,5 @@ func (logPlugin *AFLogPlugin) Uninstall() {
 }
 
 func (logPlugin *AFLogPlugin) GetPluginName() string {
-	return LogPluginName
+	return PluginName
 }

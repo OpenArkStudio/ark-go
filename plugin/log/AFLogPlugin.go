@@ -6,14 +6,5 @@ import (
 )
 
 func init() {
-	ark.GetAFPluginManagerInstance().AddPlugin(logSrc.LogPluginName, logSrc.NewAFLogPlugin())
+	ark.GetAFPluginManagerInstance().AddPlugin(logSrc.PluginName, logSrc.NewPlugin())
 }
-
-// if you want to use `so`
-//func DllEntryPlugin(pPluginManager *ark.AFPluginManager) {
-//	pPluginManager.Register(logSrc.NewAFLogPlugin())
-//}
-//
-//func DllExitPlugin(pPluginManager *ark.AFPluginManager) {
-//	pPluginManager.Deregister(logSrc.LogPluginName)
-//}

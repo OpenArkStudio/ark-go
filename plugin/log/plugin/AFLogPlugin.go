@@ -8,9 +8,9 @@ import (
 func main() {}
 
 func DllEntryPlugin(pPluginManager *ark.AFPluginManager) {
-	pPluginManager.Register(logSrc.NewAFLogPlugin())
+	pPluginManager.Register(logSrc.NewPlugin())
 }
 
 func DllExitPlugin(pPluginManager *ark.AFPluginManager) {
-	pPluginManager.Deregister(logSrc.LogPluginName)
+	pPluginManager.Deregister(logSrc.PluginName)
 }

@@ -6,14 +6,5 @@ import (
 )
 
 func init() {
-	ark.GetAFPluginManagerInstance().AddPlugin(httpSrc.HttpPluginName, httpSrc.NewAFHttpPlugin())
+	ark.GetAFPluginManagerInstance().AddPlugin(httpSrc.PluginName, httpSrc.NewPlugin())
 }
-
-// if you want to use `so`
-//func DllEntryPlugin(pPluginManager *ark.AFPluginManager) {
-//	pPluginManager.Register(httpSrc.NewAFHttpPlugin())
-//}
-//
-//func DllExitPlugin(pPluginManager *ark.AFPluginManager) {
-//	pPluginManager.Deregister(httpSrc.HttpPluginName)
-//}
