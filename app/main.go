@@ -1,15 +1,20 @@
 package main
 
 import (
-	"ark-go/model"
 	"errors"
 	"flag"
 	"fmt"
 	"log"
+	"os"
+	"os/signal"
 	"strings"
+	"syscall"
+	"time"
 
-	"ark-go/common"
-	"ark-go/util/convert"
+	"github.com/spf13/cast"
+
+	"ark-go/base"
+	"ark-go/interface"
 )
 
 const logo = `
@@ -22,7 +27,7 @@ const logo = `
 
 Copyright 2019 (c) ArkNX. All Rights Reserved.
 Website: https://arknx.com
-Github:  https://github.com/ArkNX
+Github:  https://github.com/ArkNX/ark-go
 
 Version : %s
 Branch : %s
@@ -34,7 +39,8 @@ var (
 	// version args
 	commit  string
 	branch  string
-	version = "unknown"
+	version = "no-version"
+	v       bool
 	// command line args
 	busId      string
 	serverName string
@@ -42,26 +48,29 @@ var (
 	logPath    string
 )
 
-func isFlagParsed(name string) bool {
-	found := false
-	flag.Visit(func(f *flag.Flag) {
-		if f.Name == name {
-			found = true
-		}
-	})
-	return found
-}
-
 func parseFlags() error {
 	flag.StringVar(&busId, "busid", "", "Set application id(like IP address: 8.8.8.8)")
 	flag.StringVar(&serverName, "name", "", "Set application name")
 	flag.StringVar(&plugin, "plugin", "", "plugin config path")
 	flag.StringVar(&logPath, "logpath", "", "Set application log output path")
+	flag.BoolVar(&v, "v", false, "show the version")
 	flag.Parse()
+
+	// show the version
+	if v {
+		return nil
+	}
 
 	// check the required flags
 	for _, name := range []string{"busid", "name", "plugin", "logpath"} {
-		if !isFlagParsed(name) {
+		found := false
+		flag.Visit(func(f *flag.Flag) {
+			if f.Name == name {
+				found = true
+			}
+		})
+
+		if !found {
 			return errors.New("flag ` " + name + " ` is absent")
 		}
 	}
@@ -74,23 +83,23 @@ func parseFlags() error {
 
 	var uint8Arr []uint8
 	for _, str := range strArr {
-		i, err := convert.Uint8(str)
+		i, err := cast.ToUint8E(str)
 		if err != nil {
 			return err
 		}
 		uint8Arr = append(uint8Arr, i)
 	}
 
-	model.GetAFPluginManagerInstance().SetBusID(common.NewAFBusAddr(uint8Arr[0], uint8Arr[1], uint8Arr[2], uint8Arr[3]).BudId)
+	ark.GetAFPluginManagerInstance().SetBusID(base.NewAFBusAddr(uint8Arr[0], uint8Arr[1], uint8Arr[2], uint8Arr[3]).BudId)
 
 	// set app name
-	model.GetAFPluginManagerInstance().SetAppName(serverName)
+	ark.GetAFPluginManagerInstance().SetAppName(serverName)
 
 	// set plugin config path
-	model.GetAFPluginManagerInstance().SetAppName(plugin)
+	ark.GetAFPluginManagerInstance().SetPluginConf(plugin)
 
 	// set log path
-	model.GetAFPluginManagerInstance().SetAppName(logPath)
+	ark.GetAFPluginManagerInstance().SetLogPath(logPath)
 
 	return nil
 }
@@ -100,9 +109,33 @@ func printLogo() {
 }
 
 func main() {
+	printLogo()
+
 	if err := parseFlags(); err != nil {
 		log.Fatal(err)
 	}
 
-	printLogo()
+	if v {
+		return
+	}
+
+	if err := ark.GetAFPluginManagerInstance().Start(); err != nil {
+		log.Fatal(err)
+	}
+
+	defer ark.GetAFPluginManagerInstance().Stop()
+
+	// start server
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+
+	ticker := time.NewTicker(time.Millisecond)
+	for {
+		select {
+		case <-sigChan:
+			return
+		case <-ticker.C:
+			ark.GetAFPluginManagerInstance().Update()
+		}
+	}
 }

@@ -1,4 +1,4 @@
-package common
+package base
 
 import (
 	"plugin"
@@ -9,15 +9,22 @@ type AFDynLib struct {
 	libInstance *plugin.Plugin
 }
 
+func NewAFDynLib(name string) *AFDynLib {
+	return &AFDynLib{
+		name: name,
+	}
+}
+
 func (lib *AFDynLib) GetName() string { return lib.name }
-func (lib *AFDynLib) Load(path string) bool {
+
+func (lib *AFDynLib) Load(path string) error {
 	p, err := plugin.Open(path)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	lib.libInstance = p
-	return true
+	return nil
 }
 
 func (lib *AFDynLib) Unload() bool {
@@ -31,7 +38,6 @@ func (lib *AFDynLib) GetSymbol(symbol string) plugin.Symbol {
 		panic(err)
 	}
 
-	//f.(func())()
 	return f
 
 }

@@ -1,0 +1,7 @@
+<xml>
+    <plugins path="/Users/qinhan/go/src/ark-go/bin/so">
+        <plugin name="AFHttpPlugin" />
+        <plugin name="AFLogPlugin" />
+    </plugins>
+    <res path="resource/" />
+</xml>

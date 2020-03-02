@@ -1,13 +1,12 @@
-package model
+package ark
 
 import (
 	"encoding/xml"
 	"errors"
-	"reflect"
-	"strings"
+	"path/filepath"
 	"sync"
 
-	. "ark-go/common"
+	"ark-go/base"
 	"ark-go/util"
 )
 
@@ -21,65 +20,40 @@ const (
 	exitPoint  = "DllExitPlugin"
 )
 
-type DynEntryPluginFunc func(*AFPluginManager)
-type DynExitPluginFunc func(*AFPluginManager)
-
-type pluginConf struct {
-	XMLName xml.Name `xml:"xml"`
-	Plugins *plugins `xml:"plugins"`
-	Res     *res     `xml:"res"`
-}
-
-type plugins struct {
-	XMLName xml.Name  `xml:"plugins"`
-	Path    string    `xml:"path,attr"`
-	Plugin  []*plugin `xml:"plugin"`
-}
-
-type plugin struct {
-	XMLName xml.Name `xml:"plugin"`
-	Name    string   `xml:"name,attr"`
-}
-
-type res struct {
-	XMLName xml.Name `xml:"res"`
-	Path    string   `xml:"path,attr"`
-}
-
+// ------------------- AFPluginManager -------------------
 type AFPluginManager struct {
 	busId          int    // bus id
 	timestamp      int64  // loop timestamp
-	pluginPath     string // the plugin.so filepath
+	pluginPath     string // the xxxPlugin.so filepath
 	resPath        string // the resource filepath
 	pluginConfPath string // plugin configuration filepath
 	appName        string // app name
 	logPath        string // log output path
 
-	pluginNameList            map[string]bool      // plugin_name -> bool
-	orderedPluginNameList     []string             // ordered plugin names
-	pluginLibList             map[string]*AFDynLib // dynamic libraries
-	pluginInstanceList        map[string]AFPlugin  // plugin instances
-	moduleInstanceList        map[string]*AFModule // module instances
-	orderedModuleInstanceList []*AFModule          // ordered module instances
+	pluginNameList            map[string]bool           // plugin_name -> bool
+	orderedPluginNameList     []string                  // ordered plugin names
+	pluginLibList             map[string]*base.AFDynLib // dynamic libraries
+	pluginInstanceList        map[string]AFIPlugin      // plugin instances
+	moduleInstanceList        map[string]AFIModule      // module instances
+	orderedModuleInstanceList []AFIModule               // ordered module instances
 
-	moduleWithUpdateFuncList map[string]*AFModule // the list of modules who have the `update` function
+	moduleWithUpdateFuncList map[string]AFIModule // the list of modules who have the `update` function
 }
 
 func GetAFPluginManagerInstance() *AFPluginManager {
-	if afPluginManager == nil {
-		once.Do(func() {
-			afPluginManager = &AFPluginManager{
-				timestamp:                 util.GetNowTime(),
-				pluginNameList:            make(map[string]bool),
-				orderedPluginNameList:     make([]string, 0),
-				pluginLibList:             make(map[string]*AFDynLib),
-				pluginInstanceList:        make(map[string]AFPlugin),
-				moduleInstanceList:        make(map[string]*AFModule),
-				orderedModuleInstanceList: make([]*AFModule, 0),
-				moduleWithUpdateFuncList:  make(map[string]*AFModule),
-			}
-		})
-	}
+	once.Do(func() {
+		afPluginManager = &AFPluginManager{
+			timestamp:                 util.GetNowTime(),
+			pluginNameList:            make(map[string]bool),
+			orderedPluginNameList:     make([]string, 0),
+			pluginLibList:             make(map[string]*base.AFDynLib),
+			pluginInstanceList:        make(map[string]AFIPlugin),
+			moduleInstanceList:        make(map[string]AFIModule),
+			orderedModuleInstanceList: make([]AFIModule, 0),
+			moduleWithUpdateFuncList:  make(map[string]AFIModule),
+		}
+	})
+
 	return afPluginManager
 }
 
@@ -89,8 +63,8 @@ func (a *AFPluginManager) Start() error {
 	funcMap := []func() error{
 		a.init,
 		a.postInit,
-		a.CheckConfig,
-		a.PreUpdate,
+		a.checkConfig,
+		a.preUpdate,
 	}
 
 	for _, function := range funcMap {
@@ -104,8 +78,8 @@ func (a *AFPluginManager) Start() error {
 
 func (a *AFPluginManager) Stop() error {
 	funcMap := []func() error{
-		a.PreShut,
-		a.Shut,
+		a.preShut,
+		a.shut,
 	}
 
 	for _, function := range funcMap {
@@ -128,19 +102,19 @@ func (a *AFPluginManager) Update() error {
 	return nil
 }
 
-func (a *AFPluginManager) FindModule(t reflect.Type) *AFModule {
-	return a.moduleInstanceList[t.String()]
+func (a *AFPluginManager) FindModule(name string) AFIModule {
+	return a.moduleInstanceList[name]
 }
 
-func (a *AFPluginManager) Register(plugin AFPlugin) {
+func (a *AFPluginManager) Register(plugin AFIPlugin) {
 	a.register(plugin)
 }
 
-func (a *AFPluginManager) Deregister(t reflect.Type) {
-	a.deregister(a.findPlugin(t.String()))
+func (a *AFPluginManager) Deregister(name string) {
+	a.deregister(a.findPlugin(name))
 }
 
-func (a *AFPluginManager) AddModule(moduleName string, modulePtr *AFModule) {
+func (a *AFPluginManager) AddModule(moduleName string, modulePtr AFIModule) {
 	if modulePtr == nil {
 		return
 	}
@@ -178,7 +152,7 @@ func (a *AFPluginManager) RemoveModule(moduleName string) {
 	}
 }
 
-func (a *AFPluginManager) AddUpdateModule(module *AFModule) error {
+func (a *AFPluginManager) AddUpdateModule(module AFIModule) error {
 	if module == nil {
 		return errors.New("update module to add is nil")
 	}
@@ -220,9 +194,10 @@ func (a *AFPluginManager) SetPluginConf(path string) {
 		return
 	}
 
-	if !strings.Contains(path, ".plugin") {
-		return
-	}
+	//if !strings.Contains(path, ".plugin") {
+	//	fmt.Println("failed to SetPluginConf  :", path)
+	//	return
+	//}
 
 	a.pluginConfPath = path
 }
@@ -237,7 +212,7 @@ func (a *AFPluginManager) SetLogPath(path string) {
 
 // ------------------- private func -------------------
 
-func (a *AFPluginManager) register(plugin AFPlugin) {
+func (a *AFPluginManager) register(plugin AFIPlugin) {
 	pluginName := plugin.GetPluginName()
 	if a.findPlugin(pluginName) != nil {
 		return
@@ -248,29 +223,28 @@ func (a *AFPluginManager) register(plugin AFPlugin) {
 	plugin.Install()
 }
 
-func (a *AFPluginManager) deregister(plugin AFPlugin) {
+func (a *AFPluginManager) deregister(plugin AFIPlugin) {
 	if plugin == nil {
 		return
 	}
 
 	plugin.Uninstall()
-
 	delete(a.pluginInstanceList, plugin.GetPluginName())
 }
 
-func (a *AFPluginManager) findPlugin(pluginName string) AFPlugin {
+func (a *AFPluginManager) findPlugin(pluginName string) AFIPlugin {
 	return a.pluginInstanceList[pluginName]
 }
 
 func (a *AFPluginManager) init() error {
 	// load plugin configuration
-	if err := a.LoadPluginConf(); err != nil {
+	if err := a.loadPluginConf(); err != nil {
 		return err
 	}
 
 	// load plugin dynamic libraries
 	for _, pluginName := range a.orderedPluginNameList {
-		if err := a.LoadPluginLibrary(pluginName); err != nil {
+		if err := a.loadPluginLibrary(pluginName); err != nil {
 			return err
 		}
 	}
@@ -299,7 +273,7 @@ func (a *AFPluginManager) postInit() error {
 	return nil
 }
 
-func (a *AFPluginManager) CheckConfig() error {
+func (a *AFPluginManager) checkConfig() error {
 	for _, module := range a.orderedModuleInstanceList {
 		if module == nil {
 			continue
@@ -311,7 +285,7 @@ func (a *AFPluginManager) CheckConfig() error {
 	return nil
 }
 
-func (a *AFPluginManager) PreUpdate() error {
+func (a *AFPluginManager) preUpdate() error {
 	for _, module := range a.orderedModuleInstanceList {
 		if module == nil {
 			continue
@@ -323,7 +297,7 @@ func (a *AFPluginManager) PreUpdate() error {
 	return nil
 }
 
-func (a *AFPluginManager) PreShut() error {
+func (a *AFPluginManager) preShut() error {
 	for _, module := range a.orderedModuleInstanceList {
 		if module == nil {
 			continue
@@ -335,7 +309,7 @@ func (a *AFPluginManager) PreShut() error {
 	return nil
 }
 
-func (a *AFPluginManager) Shut() error {
+func (a *AFPluginManager) shut() error {
 	for _, module := range a.orderedModuleInstanceList {
 		if module == nil {
 			continue
@@ -345,7 +319,7 @@ func (a *AFPluginManager) Shut() error {
 	}
 
 	for pluginName, _ := range a.pluginNameList {
-		a.UnLoadPluginLibrary(pluginName)
+		a.unLoadPluginLibrary(pluginName)
 	}
 
 	for _, lib := range a.pluginLibList {
@@ -355,9 +329,14 @@ func (a *AFPluginManager) Shut() error {
 	return nil
 }
 
-func (a *AFPluginManager) LoadPluginConf() error {
+func (a *AFPluginManager) loadPluginConf() error {
 	cfg := &pluginConf{}
-	if err := xml.Unmarshal(nil, cfg); err != nil {
+	data, err := util.GetBytes(a.pluginConfPath)
+	if err != nil {
+		return err
+	}
+
+	if err := xml.Unmarshal(data, cfg); err != nil {
 		return err
 	}
 
@@ -380,16 +359,21 @@ func (a *AFPluginManager) LoadPluginConf() error {
 	return nil
 }
 
-func (a *AFPluginManager) LoadPluginLibrary(pluginName string) error {
-	pDynLib, isExist := a.pluginLibList[pluginName]
-	if !isExist {
-		return errors.New("plugin ` " + pluginName + " ` is absent")
+func (a *AFPluginManager) loadPluginLibrary(pluginName string) error {
+	if _, isExist := a.pluginLibList[pluginName]; isExist {
+		// the plugin is already exist
+		return nil
 	}
 
-	entryFunc, isOK := pDynLib.GetSymbol(entryPoint).(DynEntryPluginFunc)
+	pDynLib := base.NewAFDynLib(pluginName)
+	if err := pDynLib.Load(filepath.Join(a.pluginPath, pluginName+".so")); err != nil {
+		return err
+	}
+
+	entryFunc, isOK := pDynLib.GetSymbol(entryPoint).(func(*AFPluginManager))
 	if !isOK {
 		// TODO： add log
-		return errors.New("")
+		return errors.New("failed to get entryPoint")
 	}
 
 	entryFunc(a)
@@ -397,13 +381,13 @@ func (a *AFPluginManager) LoadPluginLibrary(pluginName string) error {
 	return nil
 }
 
-func (a *AFPluginManager) UnLoadPluginLibrary(pluginName string) error {
+func (a *AFPluginManager) unLoadPluginLibrary(pluginName string) error {
 	pDynLib, isExist := a.pluginLibList[pluginName]
 	if !isExist {
 		return errors.New("plugin ` " + pluginName + " ` is absent")
 	}
 
-	exitFunc, isOK := pDynLib.GetSymbol(exitPoint).(DynExitPluginFunc)
+	exitFunc, isOK := pDynLib.GetSymbol(exitPoint).(func(*AFPluginManager))
 	if !isOK {
 		// TODO： add log
 		return errors.New("")

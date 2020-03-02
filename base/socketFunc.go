@@ -1,9 +1,10 @@
-package common
+package base
 
 import (
-	"ark-go/util/convert"
 	"errors"
 	"regexp"
+
+	"github.com/spf13/cast"
 )
 
 type ProtoType string
@@ -19,7 +20,7 @@ const (
 )
 
 func ProtoTypeToStr(t ProtoType) string {
-	return convert.StringWithoutErr(t)
+	return cast.ToString(t)
 }
 
 func StrToProtoType(t string) ProtoType {
@@ -71,7 +72,7 @@ func NewFromString(url string) (*AFEndpoint, error) {
 
 	strArr := r.FindStringSubmatch(url)
 
-	port, err := convert.Uint16(strArr[5])
+	port, err := cast.ToUint16E(strArr[5])
 	if err != nil {
 		return nil, err
 	}
@@ -99,7 +100,8 @@ func (a *AFEndpoint) ToString() string {
 		url += string(a.ext.Proto)
 	}
 
-	url += a.GetIP() + ":" + convert.StringWithoutErr(a.GetPort()) + a.GetPath()
+	url += a.GetIP() + ":" + cast.ToString(a.GetPort()) + a.GetPath()
+
 	return url
 }
 

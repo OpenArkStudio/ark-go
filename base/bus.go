@@ -1,12 +1,13 @@
-package common
+package base
 
 import (
-	"ark-go/util/convert"
 	"encoding/binary"
 	"errors"
 	"fmt"
 	"strings"
 	"time"
+
+	"github.com/spf13/cast"
 )
 
 // bus address, like IP address, 8.8.8.8
@@ -54,7 +55,7 @@ func (a *AFBusAddr) FromString(busName string) error {
 
 	var uint8Arr []uint8
 	for _, str := range []string{strs[0], strs[1], strs[2], strs[3]} {
-		i, err := convert.Uint8(str)
+		i, err := cast.ToUint8E(str)
 		if err != nil {
 			return err
 		}
