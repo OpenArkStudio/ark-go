@@ -5,7 +5,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	ark "ark-go/interface"
+	ark "github.com/ArkNX/ark-go/interface"
 )
 
 var AFILogModuleName string

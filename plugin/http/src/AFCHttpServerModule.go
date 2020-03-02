@@ -5,10 +5,10 @@ import (
 	"log"
 	"net/http"
 
-	"ark-go/interface"
-	httpInterface "ark-go/plugin/http/interface"
-	logInterface "ark-go/plugin/log/interface"
-	"ark-go/util"
+	"github.com/ArkNX/ark-go/interface"
+	httpInterface "github.com/ArkNX/ark-go/plugin/http/interface"
+	logInterface "github.com/ArkNX/ark-go/plugin/log/interface"
+	"github.com/ArkNX/ark-go/util"
 )
 
 var (

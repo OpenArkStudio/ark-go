@@ -1,4 +1,4 @@
-package main
+package app
 
 import (
 	"errors"
@@ -13,8 +13,8 @@ import (
 
 	"github.com/spf13/cast"
 
-	"ark-go/base"
-	"ark-go/interface"
+	"github.com/ArkNX/ark-go/base"
+	ark "github.com/ArkNX/ark-go/interface"
 )
 
 const logo = `
@@ -108,7 +108,7 @@ func printLogo() {
 	fmt.Printf(logo, version, branch, commit)
 }
 
-func main() {
+func App() {
 	printLogo()
 
 	if err := parseFlags(); err != nil {

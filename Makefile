@@ -8,8 +8,6 @@ ifdef VERSION
 	LDFLAGS += -X main.version=$(VERSION)
 endif
 
-.PHONY: app
-app:
-	CGO_ENABLED=1 go build -ldflags "$(LDFLAGS)" -o bin/app ./app/main.go
-	go build -buildmode=plugin -o bin/so/AFHttpPlugin.so plugin/http/AFHttpPlugin.go
-	go build -buildmode=plugin -o bin/so/AFLogPlugin.so plugin/log/AFLogPlugin.go
+.PHONY: demo
+demo:
+	CGO_ENABLED=0 go build -ldflags "$(LDFLAGS)" -o bin/demo ./server/demo/main.go

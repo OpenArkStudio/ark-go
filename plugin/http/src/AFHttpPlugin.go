@@ -1,8 +1,8 @@
 package httpSrc
 
 import (
-	"ark-go/interface"
-	"ark-go/util"
+	"github.com/ArkNX/ark-go/interface"
+	"github.com/ArkNX/ark-go/util"
 )
 
 var HttpPluginName = util.GetName((*AFHttpPlugin)(nil))

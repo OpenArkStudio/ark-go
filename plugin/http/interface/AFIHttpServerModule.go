@@ -1,6 +1,6 @@
 package httpInterface
 
-import "ark-go/interface"
+import "github.com/ArkNX/ark-go/interface"
 
 var AFIHttpServerModuleName string
 

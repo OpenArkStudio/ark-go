@@ -7,9 +7,9 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"ark-go/interface"
-	logInterface "ark-go/plugin/log/interface"
-	"ark-go/util"
+	"github.com/ArkNX/ark-go/interface"
+	logInterface "github.com/ArkNX/ark-go/plugin/log/interface"
+	"github.com/ArkNX/ark-go/util"
 )
 
 var (

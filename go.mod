@@ -1,4 +1,4 @@
-module ark-go
+module github.com/ArkNX/ark-go
 
 go 1.13
 
