@@ -108,7 +108,7 @@ func printLogo() {
 	fmt.Printf(logo, version, branch, commit)
 }
 
-func App() {
+func Start() {
 	printLogo()
 
 	if err := parseFlags(); err != nil {
