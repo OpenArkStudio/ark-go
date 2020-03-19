@@ -99,7 +99,8 @@ type AFI{{.CModuleName}}Module interface {
 	moduleSrcFile = `package {{.PluginName}}Src
 
 import (
-	"fmt"
+	"reflect"
+	"runtime"
 
 	"github.com/ArkNX/ark-go/interface"
 	{{.PluginName}}Interface "github.com/ArkNX/ark-go/plugin/{{.PluginName}}/interface"
@@ -109,7 +110,7 @@ import (
 var (
 	{{.ModuleName}}ModuleType   = util.GetType((*AFC{{.CModuleName}}Module)(nil))
 	{{.ModuleName}}ModuleName   = util.GetName((*AFC{{.CModuleName}}Module)(nil))
-	{{.ModuleName}}ModuleUpdate = fmt.Sprintf("%p", (&AFC{{.CModuleName}}Module{}).Update) != fmt.Sprintf("%p", (&ark.AFCModule{}).Update)
+	{{.ModuleName}}ModuleUpdate = runtime.FuncForPC(reflect.ValueOf((&AFC{{.CModuleName}}Module{}).Update).Pointer()).Name()
 )
 
 func init() {

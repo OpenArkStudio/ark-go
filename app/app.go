@@ -109,11 +109,11 @@ func printLogo() {
 }
 
 func Start() {
-	printLogo()
-
 	if err := parseFlags(); err != nil {
 		log.Fatal(err)
 	}
+
+	printLogo()
 
 	if v {
 		return

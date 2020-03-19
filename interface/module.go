@@ -1,5 +1,10 @@
 package ark
 
+import (
+	"reflect"
+	"runtime"
+)
+
 type AFIModule interface {
 	Init() error
 	PostInit() error
@@ -13,6 +18,8 @@ type AFIModule interface {
 	GetName() string
 	SetName(name string)
 }
+
+var afcModuleUpdate = runtime.FuncForPC(reflect.ValueOf((&AFCModule{}).Update).Pointer()).Name()
 
 // ------------------- AFIModule implement -------------------
 // ------------------- Eclectic solution for c++ macro -------------------
